@@ -17,8 +17,8 @@ from google.cloud import texttospeech
 # from pygame import mixer  # Load the required library
 
 # Audio recording parameters
-RATE = 16000
-CHUNK = int(RATE / 10)  # 100ms
+RATE = 44100
+CHUNK = 512
 clientT2S = texttospeech.TextToSpeechClient()
 
 
