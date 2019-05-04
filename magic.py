@@ -11,8 +11,13 @@ import pyaudio
 from six.moves import queue
 import requests
 
-import simpleaudio as sa
 from google.cloud import texttospeech
+import sounddevice as sd
+
+from pydub import AudioSegment
+from pydub.playback import play
+import io
+import simpleaudio as sa
 
 # from pygame import mixer  # Load the required library
 
@@ -144,40 +149,47 @@ def listen_print_loop(responses):
             try:
                 res = requests.get(link)
                 response = res.json()
-                print("Question: {}, Answer: {}".format(transcript, response['answers'][0]['span']))
-                synthesis_input = texttospeech.types.SynthesisInput(text=response['answers'][0]['span'])
-
-                # Build the voice request, select the language code ("en-US") and the ssml
-                # voice gender ("neutral")
-                voice = texttospeech.types.VoiceSelectionParams(
-                    language_code='en-US',
-                    ssml_gender=texttospeech.enums.SsmlVoiceGender.NEUTRAL)
-
-                # Select the type of audio file you want returned
-                audio_config = texttospeech.types.AudioConfig(
-                    audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16)
-
-                # Perform the text-to-speech request on the text input with the selected
-                # voice parameters and audio file type
-                response = clientT2S.synthesize_speech(synthesis_input, voice, audio_config)
-                with open('output.wav', 'wb') as out:
-                    # Write the response to the output file.
-                    out.write(response.audio_content)
-                    print('Audio content written to file "output.wav"')
-
-                wave_obj = sa.WaveObject.from_wave_file("output.wav")
-                play_obj = wave_obj.play()
-                play_obj.wait_done()
-
+                answer = response['answers'][0]['span']
                 # Exit recognition if any of the transcribed phrases could be
                 # one of our keywords.
                 # if re.search(r'\b(exit|quit)\b', transcript, re.I):
                 #     print('Exiting..')
                 #     break
             except Exception as e:
+                answer = "I don't know, you tell me, 21"
                 print("error {}".format(e))
                 print("result {}".format(response.results))
                 num_chars_printed = 0
+
+            print("Question: {}, Answer: {}".format(transcript, answer))
+            synthesis_input = texttospeech.types.SynthesisInput(text=answer)
+
+            # Build the voice request, select the language code ("en-US") and the ssml
+            # voice gender ("neutral")
+            voice = texttospeech.types.VoiceSelectionParams(
+                language_code='en-US',
+                ssml_gender=texttospeech.enums.SsmlVoiceGender.NEUTRAL)
+
+            # Select the type of audio file you want returned
+            audio_config = texttospeech.types.AudioConfig(
+                audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16)
+
+            # Perform the text-to-speech request on the text input with the selected
+            # voice parameters and audio file type
+            response = clientT2S.synthesize_speech(synthesis_input, voice, audio_config)
+            # song = AudioSegment.from_file(io.BytesIO(response.audio_content), format="mp3")
+            # play(song)
+            # sd.play(bytearray(response.audio_content), samplerate=48000)
+            # with open('output.wav', 'wb') as out:
+            #     # Write the response to the output file.
+            #     out.write(response.audio_content)
+            # print('Audio content written to file "output.wav"')
+            #
+            play_obj = sa.WaveObject(response.audio_content, 2, 2, 11025)
+            play_obj.play()
+            # wave_obj = sa.WaveObject.from_wave_file("output.wav")
+            # play_obj = wave_obj.play()
+            # play_obj.wait_done()
 
 
 def run(streaming_config, client):
@@ -185,7 +197,7 @@ def run(streaming_config, client):
         audio_generator = stream.generator()
         requests = (types.StreamingRecognizeRequest(audio_content=content)
                     for content in audio_generator)
-        print("MIC loop")
+        print("MIC active")
         responses = client.streaming_recognize(streaming_config, requests)
 
         # Now, put the transcription responses to use.
