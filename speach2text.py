@@ -11,14 +11,13 @@ from six.moves import queue
 import requests
 
 from google.cloud import texttospeech
-from pygame import mixer  # Load the required library
-import io
+# from pygame import mixer  # Load the required library
 
 # Audio recording parameters
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
 client = texttospeech.TextToSpeechClient()
-mixer.init()
+# mixer.init()
 
 
 class MicrophoneStream(object):
@@ -149,17 +148,23 @@ def listen_print_loop(responses):
 
             # Select the type of audio file you want returned
             audio_config = texttospeech.types.AudioConfig(
-                audio_encoding=texttospeech.enums.AudioEncoding.MP3)
+                audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16)
 
             # Perform the text-to-speech request on the text input with the selected
             # voice parameters and audio file type
             response = client.synthesize_speech(synthesis_input, voice, audio_config)
-            with open('output.mp3', 'wb') as out:
+            with open('output.wav', 'wb') as out:
                 # Write the response to the output file.
                 out.write(response.audio_content)
-                print('Audio content written to file "output.mp3"')
-            mixer.music.load('output.mp3')
-            mixer.music.play()
+                print('Audio content written to file "output.wav"')
+            # mixer.music.load('output.mp3')
+            # mixer.music.play()
+
+            import simpleaudio as sa
+
+            wave_obj = sa.WaveObject.from_wave_file("output.wav")
+            play_obj = wave_obj.play()
+            play_obj.wait_done()
 
             # Exit recognition if any of the transcribed phrases could be
             # one of our keywords.
