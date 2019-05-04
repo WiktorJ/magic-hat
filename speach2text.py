@@ -1,5 +1,6 @@
 from __future__ import division
 
+import json
 import re
 import sys
 
@@ -10,14 +11,15 @@ import pyaudio
 from six.moves import queue
 import requests
 
+import simpleaudio as sa
 from google.cloud import texttospeech
+
 # from pygame import mixer  # Load the required library
 
 # Audio recording parameters
 RATE = 16000
 CHUNK = int(RATE / 10)  # 100ms
-client = texttospeech.TextToSpeechClient()
-# mixer.init()
+clientT2S = texttospeech.TextToSpeechClient()
 
 
 class MicrophoneStream(object):
@@ -135,44 +137,59 @@ def listen_print_loop(responses):
             num_chars_printed = len(transcript)
 
         else:
+            message = transcript.replace(' ', '+')
+            while message[0] == '+':
+                message = message[1:]
             link = "http://35.246.158.89:5000/?question={}".format(transcript.replace(' ', '+'))
-            response = requests.get(link).json()
-            print("Question: {}, Answer: {}".format(transcript, response['answers'][0]['span']))
-            synthesis_input = texttospeech.types.SynthesisInput(text=response['answers'][0]['span'])
+            try:
+                res = requests.get(link)
+                response = res.json()
+                print("Question: {}, Answer: {}".format(transcript, response['answers'][0]['span']))
+                synthesis_input = texttospeech.types.SynthesisInput(text=response['answers'][0]['span'])
 
-            # Build the voice request, select the language code ("en-US") and the ssml
-            # voice gender ("neutral")
-            voice = texttospeech.types.VoiceSelectionParams(
-                language_code='en-US',
-                ssml_gender=texttospeech.enums.SsmlVoiceGender.NEUTRAL)
+                # Build the voice request, select the language code ("en-US") and the ssml
+                # voice gender ("neutral")
+                voice = texttospeech.types.VoiceSelectionParams(
+                    language_code='en-US',
+                    ssml_gender=texttospeech.enums.SsmlVoiceGender.NEUTRAL)
 
-            # Select the type of audio file you want returned
-            audio_config = texttospeech.types.AudioConfig(
-                audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16)
+                # Select the type of audio file you want returned
+                audio_config = texttospeech.types.AudioConfig(
+                    audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16)
 
-            # Perform the text-to-speech request on the text input with the selected
-            # voice parameters and audio file type
-            response = client.synthesize_speech(synthesis_input, voice, audio_config)
-            with open('output.wav', 'wb') as out:
-                # Write the response to the output file.
-                out.write(response.audio_content)
-                print('Audio content written to file "output.wav"')
-            # mixer.music.load('output.mp3')
-            # mixer.music.play()
+                # Perform the text-to-speech request on the text input with the selected
+                # voice parameters and audio file type
+                response = clientT2S.synthesize_speech(synthesis_input, voice, audio_config)
+                with open('output.wav', 'wb') as out:
+                    # Write the response to the output file.
+                    out.write(response.audio_content)
+                    print('Audio content written to file "output.wav"')
 
-            import simpleaudio as sa
+                wave_obj = sa.WaveObject.from_wave_file("output.wav")
+                play_obj = wave_obj.play()
+                play_obj.wait_done()
 
-            wave_obj = sa.WaveObject.from_wave_file("output.wav")
-            play_obj = wave_obj.play()
-            play_obj.wait_done()
+                # Exit recognition if any of the transcribed phrases could be
+                # one of our keywords.
+                # if re.search(r'\b(exit|quit)\b', transcript, re.I):
+                #     print('Exiting..')
+                #     break
+            except Exception as e:
+                print("error {}".format(e))
+                print("result {}".format(response.results))
+                num_chars_printed = 0
 
-            # Exit recognition if any of the transcribed phrases could be
-            # one of our keywords.
-            # if re.search(r'\b(exit|quit)\b', transcript, re.I):
-            #     print('Exiting..')
-            #     break
 
-            num_chars_printed = 0
+def run(streaming_config, client):
+    with MicrophoneStream(RATE, CHUNK) as stream:
+        audio_generator = stream.generator()
+        requests = (types.StreamingRecognizeRequest(audio_content=content)
+                    for content in audio_generator)
+        print("MIC loop")
+        responses = client.streaming_recognize(streaming_config, requests)
+
+        # Now, put the transcription responses to use.
+        listen_print_loop(responses)
 
 
 def main():
@@ -189,15 +206,11 @@ def main():
         config=config,
         interim_results=True)
 
-    with MicrophoneStream(RATE, CHUNK) as stream:
-        audio_generator = stream.generator()
-        requests = (types.StreamingRecognizeRequest(audio_content=content)
-                    for content in audio_generator)
-
-        responses = client.streaming_recognize(streaming_config, requests)
-
-        # Now, put the transcription responses to use.
-        listen_print_loop(responses)
+    while True:
+        try:
+            run(streaming_config, client)
+        except Exception as e:
+            print("Main loop exception, restarting... {}".format(e))
 
 
 if __name__ == '__main__':
