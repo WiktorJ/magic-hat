@@ -12,11 +12,7 @@ from six.moves import queue
 import requests
 
 from google.cloud import texttospeech
-import sounddevice as sd
 
-from pydub import AudioSegment
-from pydub.playback import play
-import io
 import simpleaudio as sa
 
 # from pygame import mixer  # Load the required library
