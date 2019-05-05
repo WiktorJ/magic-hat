@@ -34,21 +34,28 @@ def sorting_mode():
     team_name = random.choice(TEAM_NAMES)
     synthesis_input = texttospeech.types.SynthesisInput(text=team_name)
     response = clientT2S.synthesize_speech(synthesis_input, voice, audio_config)
-    play_obj = sa.play_buffer(response.audio_content, 1, 2, 22050)
+    wave_obj = sa.WaveObject(response.audio_content, 1, 2, 22050)
+    play_obj = wave_obj.play()
     play_obj.wait_done()
+
+def party_mode():
+    # TODO light up LEDs
+    wave_obj = sa.WaveObject.from_wave_file("/home/pi/party_audio.wav") # TODO filepath
+    play_obj = wave_obj.play()
+    while GPIO.input(PARTY_PIN) == GPIO.HIGH
+        time.sleep(0.2)
+    play_obj.stop()
 
 print("Starting the awesome hat control!")
 
 while True:
     if GPIO.input(PARTY_PIN) == GPIO.HIGH:  # Upwards
-        print("PARTY MODE")
-        # TODO light up LEDs, play music while input is HIGH
-        time.sleep(5)
+        print("PARTY")
+        party_mode()
     elif GPIO.input(ASSISTANT_PIN) == GPIO.HIGH:  # Upwards
         print("ASSISTANT MODE")
-        # TODO one run of recording, sending, answering (blocking)
+        # one run of recording, sending, answering (blocking)
         assist()
-        time.sleep(5)
     elif GPIO.input(SORTING_PIN) == GPIO.HIGH:  # Upwards
         print("SORTING MODE")
         if was_sorting:
@@ -57,7 +64,7 @@ while True:
         sorting_mode()
         was_sorting = True
         continue
-    else:  # No mode is active
+    else:
         print("No mode active")
         time.sleep(1)
     was_sorting = False
