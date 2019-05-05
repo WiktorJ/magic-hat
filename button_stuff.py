@@ -4,6 +4,8 @@ import random
 import simpleaudio as sa
 from magic import assist
 
+from google.cloud import texttospeech
+
 GPIO.setmode(GPIO.BCM)
 
 BUTTON_PIN = 20
