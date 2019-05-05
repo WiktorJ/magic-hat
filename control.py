@@ -1,6 +1,8 @@
 import RPi.GPIO as GPIO
 import time
 import random
+import simpleaudio as sa
+from magic import assist
 
 from google.cloud import texttospeech
 
@@ -8,7 +10,7 @@ GPIO.setmode(GPIO.BCM)
 
 PARTY_PIN = 16
 ASSISTANT_PIN = 19
-SORTING_PIN = 27 # TODO
+SORTING_PIN = 27  # TODO
 BUTTON_PIN = 20
 
 TEAM_NAMES = ["Hardest Hat", "Dialog Revolution"]
@@ -20,21 +22,21 @@ GPIO.setup(BUTTON_PIN, GPIO.IN)
 
 clientT2S = texttospeech.TextToSpeechClient()
 voice = texttospeech.types.VoiceSelectionParams(
-                language_code='en-US',
-                ssml_gender=texttospeech.enums.SsmlVoiceGender.NEUTRAL)
+    language_code='en-US',
+    ssml_gender=texttospeech.enums.SsmlVoiceGender.NEUTRAL)
 audio_config = texttospeech.types.AudioConfig(
-                audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16)
+    audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16)
 
 was_sorting = False
-
 
 
 def sorting_mode():
     team_name = random.choice(TEAM_NAMES)
     synthesis_input = texttospeech.types.SynthesisInput(text=team_name)
     response = clientT2S.synthesize_speech(synthesis_input, voice, audio_config)
-    play_obj = sa.WaveObject(response.audio_content, 2, 2, 11025)
-    play_obj.play() # change to blocking, see assistant
+    play_obj = sa.WaveObject(response.audio_content, 1, 2, 22050)
+    play_obj.play()
+
 
 while True:
     if GPIO.input(PARTY_PIN) == GPIO.HIGH:  # Upwards
@@ -44,6 +46,7 @@ while True:
     elif GPIO.input(ASSISTANT_PIN) == GPIO.HIGH:  # Upwards
         print("ASSISTANT MODE")
         # TODO one run of recording, sending, answering (blocking)
+        assist()
         time.sleep(5)
     elif GPIO.input(SORTING_PIN) == GPIO.HIGH:  # Upwards
         print("SORTING MODE")
@@ -53,7 +56,9 @@ while True:
             continue
         sorting_mode()
         was_sorting = True
+        continue
     else:  # No mode is active
+        print("No mode active")
         time.sleep(1)
     was_sorting = False
 

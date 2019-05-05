@@ -1,8 +1,7 @@
 from __future__ import division
 
-import json
-import re
 import sys
+import traceback
 
 from google.cloud import speech
 from google.cloud.speech import enums
@@ -14,8 +13,6 @@ import requests
 from google.cloud import texttospeech
 
 import simpleaudio as sa
-
-# from pygame import mixer  # Load the required library
 
 # Audio recording parameters
 RATE = 44100
@@ -181,7 +178,10 @@ def listen_print_loop(responses):
             #     out.write(response.audio_content)
             # print('Audio content written to file "output.wav"')
             #
-            play_obj = sa.play_buffer(response.audio_content, 2, 2, 11025)
+            # play_obj = sa.play_buffer(response.audio_content, 2, 2, 11025)
+            # play_obj.wait_done()
+            wave_obj = sa.WaveObject(response.audio_content, 1, 2, 22050)
+            play_obj = wave_obj.play()
             play_obj.wait_done()
             # wave_obj = sa.WaveObject.from_wave_file("output.wav")
             # play_obj = wave_obj.play()
@@ -201,7 +201,7 @@ def run(streaming_config, client):
         listen_print_loop(responses)
 
 
-def main():
+def assist():
     # See http://g.co/cloud/speech/docs/languages
     # for a list of supported languages.
     language_code = 'en-US'  # a BCP-47 language tag
@@ -219,8 +219,9 @@ def main():
     try:
         run(streaming_config, client)
     except Exception as e:
-        print("Main loop exception {}".format(e))
+        print("Assistant exception: ")
+        print(e)
 
 
 if __name__ == '__main__':
-    main()
+    assist()
