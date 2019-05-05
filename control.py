@@ -34,9 +34,10 @@ def sorting_mode():
     team_name = random.choice(TEAM_NAMES)
     synthesis_input = texttospeech.types.SynthesisInput(text=team_name)
     response = clientT2S.synthesize_speech(synthesis_input, voice, audio_config)
-    play_obj = sa.WaveObject(response.audio_content, 1, 2, 22050)
-    play_obj.play()
+    play_obj = sa.play_buffer(response.audio_content, 1, 2, 22050)
+    play_obj.wait_done()
 
+print("Starting the awesome hat control!")
 
 while True:
     if GPIO.input(PARTY_PIN) == GPIO.HIGH:  # Upwards
@@ -50,7 +51,6 @@ while True:
         time.sleep(5)
     elif GPIO.input(SORTING_PIN) == GPIO.HIGH:  # Upwards
         print("SORTING MODE")
-        # TODO say a team name (blocking)
         if was_sorting:
             time.sleep(1)
             continue
