@@ -10,7 +10,7 @@ GPIO.setmode(GPIO.BCM)
 
 PARTY_PIN = 16
 ASSISTANT_PIN = 19
-SORTING_PIN = 27  # TODO
+SORTING_PIN = 26  # TODO
 BUTTON_PIN = 20
 
 TEAM_NAMES = ["Hardest Hat", "Dialog Revolution"]
@@ -42,7 +42,7 @@ def party_mode():
     # TODO light up LEDs
     wave_obj = sa.WaveObject.from_wave_file("/home/pi/party_audio.wav") # TODO filepath
     play_obj = wave_obj.play()
-    while GPIO.input(PARTY_PIN) == GPIO.HIGH
+    while GPIO.input(PARTY_PIN) == GPIO.HIGH:
         time.sleep(0.2)
     play_obj.stop()
 
