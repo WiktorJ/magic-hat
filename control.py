@@ -18,7 +18,6 @@ TEAM_NAMES = ["Cognition", "Mechatronics", "Control", "Growth", "Middleware"]
 GPIO.setup(PARTY_PIN, GPIO.IN)
 GPIO.setup(ASSISTANT_PIN, GPIO.IN)
 GPIO.setup(SORTING_PIN, GPIO.IN)
-GPIO.setup(BUTTON_PIN, GPIO.IN)
 
 clientT2S = texttospeech.TextToSpeechClient()
 voice = texttospeech.types.VoiceSelectionParams(
