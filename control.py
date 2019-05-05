@@ -13,7 +13,7 @@ ASSISTANT_PIN = 26
 SORTING_PIN = 19
 BUTTON_PIN = 20
 
-TEAM_NAMES = ["Hardest Hat", "Dialog Revolution"]
+TEAM_NAMES = ["Cognition", "Mechatronics", "Control", "Growth", "Middleware"]
 
 GPIO.setup(PARTY_PIN, GPIO.IN)
 GPIO.setup(ASSISTANT_PIN, GPIO.IN)
@@ -40,12 +40,11 @@ def sorting_mode():
 
 def party_mode():
     # TODO light up LEDs
-    pass
-    #wave_obj = sa.WaveObject.from_wave_file("/home/pi/party_audio.wav")
-    #play_obj = wave_obj.play()
-    #while GPIO.input(PARTY_PIN) == GPIO.HIGH:
-    #    time.sleep(0.2)
-    #play_obj.stop()
+    wave_obj = sa.WaveObject.from_wave_file("/home/pi/party_audio.wav")
+    play_obj = wave_obj.play()
+    while GPIO.input(PARTY_PIN) == GPIO.LOW:
+        time.sleep(0.2)
+    play_obj.stop()
 
 print("Starting the awesome hat control!")
 
@@ -57,15 +56,14 @@ while True:
     elif GPIO.input(SORTING_PIN) == GPIO.HIGH:  # Upwards
         print("SORTING MODE")
         if was_sorting:
-            time.sleep(1)
+            time.sleep(0.2)
             continue
         sorting_mode()
         was_sorting = True
         continue
-    elif GPIO.input(PARTY_PIN) == GPIO.HIGH:  # Upwards
+    elif GPIO.input(PARTY_PIN) == GPIO.LOW:  # Upwards
         print("PARTY")
         party_mode()
-        time.sleep(0.2)
     else:
         print("No mode active")
         time.sleep(1)
