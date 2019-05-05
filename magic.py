@@ -181,11 +181,12 @@ def listen_print_loop(responses):
             #     out.write(response.audio_content)
             # print('Audio content written to file "output.wav"')
             #
-            play_obj = sa.WaveObject(response.audio_content, 2, 2, 11025)
-            play_obj.play()
+            play_obj = sa.play_buffer(response.audio_content, 2, 2, 11025)
+            play_obj.wait_done()
             # wave_obj = sa.WaveObject.from_wave_file("output.wav")
             # play_obj = wave_obj.play()
             # play_obj.wait_done()
+            break
 
 
 def run(streaming_config, client):
@@ -214,11 +215,11 @@ def main():
         config=config,
         interim_results=True)
 
-    while True:
-        try:
-            run(streaming_config, client)
-        except Exception as e:
-            print("Main loop exception, restarting... {}".format(e))
+    # while True:
+    try:
+        run(streaming_config, client)
+    except Exception as e:
+        print("Main loop exception {}".format(e))
 
 
 if __name__ == '__main__':
