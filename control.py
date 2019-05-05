@@ -1,5 +1,6 @@
 import RPi.GPIO as GPIO
 import time
+import random
 
 from google.cloud import texttospeech
 
@@ -24,14 +25,16 @@ voice = texttospeech.types.VoiceSelectionParams(
 audio_config = texttospeech.types.AudioConfig(
                 audio_encoding=texttospeech.enums.AudioEncoding.LINEAR16)
 
+was_sorting = False
 
 
 
 def sorting_mode():
-    
-    synthesis_input = texttospeech.types.SynthesisInput(text=)#TODO
+    team_name = random.choice(TEAM_NAMES)
+    synthesis_input = texttospeech.types.SynthesisInput(text=team_name)
     response = clientT2S.synthesize_speech(synthesis_input, voice, audio_config)
-    
+    play_obj = sa.WaveObject(response.audio_content, 2, 2, 11025)
+    play_obj.play() # change to blocking, see assistant
 
 while True:
     if GPIO.input(PARTY_PIN) == GPIO.HIGH:  # Upwards
@@ -45,9 +48,13 @@ while True:
     elif GPIO.input(SORTING_PIN) == GPIO.HIGH:  # Upwards
         print("SORTING MODE")
         # TODO say a team name (blocking)
+        if was_sorting:
+            time.sleep(1)
+            continue
         sorting_mode()
-        time.sleep(5)
+        was_sorting = True
     else:  # No mode is active
         time.sleep(1)
+    was_sorting = False
 
 GPIO.cleanup()
