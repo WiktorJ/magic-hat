@@ -9,8 +9,8 @@ from google.cloud import texttospeech
 GPIO.setmode(GPIO.BCM)
 
 PARTY_PIN = 16
-ASSISTANT_PIN = 19
-SORTING_PIN = 26  # TODO
+ASSISTANT_PIN = 26
+SORTING_PIN = 19
 BUTTON_PIN = 20
 
 TEAM_NAMES = ["Hardest Hat", "Dialog Revolution"]
@@ -40,19 +40,17 @@ def sorting_mode():
 
 def party_mode():
     # TODO light up LEDs
-    wave_obj = sa.WaveObject.from_wave_file("/home/pi/party_audio.wav") # TODO filepath
-    play_obj = wave_obj.play()
-    while GPIO.input(PARTY_PIN) == GPIO.HIGH:
-        time.sleep(0.2)
-    play_obj.stop()
+    pass
+    #wave_obj = sa.WaveObject.from_wave_file("/home/pi/party_audio.wav")
+    #play_obj = wave_obj.play()
+    #while GPIO.input(PARTY_PIN) == GPIO.HIGH:
+    #    time.sleep(0.2)
+    #play_obj.stop()
 
 print("Starting the awesome hat control!")
 
 while True:
-    if GPIO.input(PARTY_PIN) == GPIO.HIGH:  # Upwards
-        print("PARTY")
-        party_mode()
-    elif GPIO.input(ASSISTANT_PIN) == GPIO.HIGH:  # Upwards
+    if GPIO.input(ASSISTANT_PIN) == GPIO.HIGH:  # Upwards
         print("ASSISTANT MODE")
         # one run of recording, sending, answering (blocking)
         assist()
@@ -64,6 +62,10 @@ while True:
         sorting_mode()
         was_sorting = True
         continue
+    elif GPIO.input(PARTY_PIN) == GPIO.HIGH:  # Upwards
+        print("PARTY")
+        party_mode()
+        time.sleep(0.2)
     else:
         print("No mode active")
         time.sleep(1)
